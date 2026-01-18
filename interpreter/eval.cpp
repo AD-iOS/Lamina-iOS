@@ -105,6 +105,7 @@ Value HANDLE_BINARYEXPR_ADD(Value* l, Value* r) {
         return Value(result);
     } else {
         L_ERR("Cannot add " + l->to_string() + " and " + r->to_string());
+        throw std::runtime_error("Type error in addition operation"); // 防止編譯器警告,寫了一個異常拋出
     }
 }
 
@@ -256,6 +257,7 @@ Value HANDLE_BINARYEXPR_STR_ADD_STR(Value* l, Value* r) {
         return Value(simplified->toString());
     } catch (...) {
         // parsing failed for one or both strings; fall back to normal concatenation
+        return Value(ls + rs); // 添加了字符串拼接的實現
     }
 }
 

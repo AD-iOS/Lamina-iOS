@@ -7,6 +7,9 @@
 </div>
 <br>
 
+### iOS Lamina  
+This repository (AD-iOS/Lamina-iOS) is not an official repository (Lamina-dev/Lamina). It only synchronizes periodically with Lamina-dev/Lamina and provides the latest Lamina for iOS jailbreak.
+
 ### RC stage: no new features, syntax changes, or functionality will be accepted; this release candidate is intended for debugging only.
 
 [![GitHub issues](https://img.shields.io/github/issues/lamina-dev/Lamina)](https://github.com/Lamina-dev/Lamina/issues)

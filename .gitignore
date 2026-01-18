@@ -23,6 +23,7 @@
 **/*.vcxproj*
 **/*.sln
 **/*.dir/
+build/*
 
 # IDE and editor files
 /.vs/
@@ -51,3 +52,6 @@ test_*.lm
 .cache
 
 .xmake
+
+# AD gir-pr
+.gir-pr/*

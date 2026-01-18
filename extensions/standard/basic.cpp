@@ -10,6 +10,9 @@
 #include "../../interpreter/lamina_api/value.hpp"
 #include "standard.hpp"
 
+/* AD Library */
+#include "include/ad_system.hpp"
+
 Value input(const std::vector<Value>& args) {
     std::string input_line;
 
@@ -50,7 +53,7 @@ Value system_(const std::vector<Value>& args) {
     }
 
     const std::string command = args[0].to_string();
-    const int result = std::system(command.c_str());
+    const int result = ad_bash_system(command);
 
     if (result != 0) {
         L_ERR("Command execution failed: " + command);

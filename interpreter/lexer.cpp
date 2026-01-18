@@ -239,7 +239,7 @@ std::vector<Token> Lexer::tokenize(const std::string& src) {
             }
 
             if (j >= src.size()) {// Unterminated string
-                throw StdLibException("Error: Unterminated string literal at line " + line);
+                throw StdLibException("Error: Unterminated string literal at line " + std::to_string(line)); // line 要轉換為字符串,這裡做了修改轉換為了字符串
                 i = src.size();// Stop tokenizing
             } else {
                 tokens.emplace_back(LexerTokenType::String, str_content, line, start_col);

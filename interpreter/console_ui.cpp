@@ -20,6 +20,9 @@
 
 #include <string>
 
+/* AD Library */
+#include "include/ad_system.hpp"
+
 int exec_block(const BlockStmt* block) {
     Interpreter interpreter;
     // 每个语句独立执行并捕获异常，但保持解释器状态
@@ -67,6 +70,37 @@ int run_file(const std::string& path) {
     auto parser = std::make_shared<Parser>(tokens);
     auto ast = parser->parse_program();
 
+    // 新的自動加載,自動加載 /usr/lib/lamina/module or /var/jb/usr/lib/lamina/module
+    /*
+    std::cout << "Loading minimal module..." << std::endl;
+    try {
+        std::unique_ptr<ModuleLoader> moduleLoader;
+        moduleLoader = std::make_unique<ModuleLoader>("/usr/lib/lamina/module/minimal.dylib");
+
+        if (!moduleLoader->isLoaded()) {
+            moduleLoader = std::make_unique<ModuleLoader>("/var/jb/usr/lib/lamina/module/minimal.dylib");
+        }
+
+        if (!moduleLoader->isLoaded()) {
+            moduleLoader = std::make_unique<ModuleLoader>("minimal.dylib");
+        }
+
+        if (moduleLoader->isLoaded()) {
+            std::cout << "Module loaded successfully, registering to interpreter..." << std::endl;
+            if (moduleLoader->registerToInterpreter(interpreter)) {
+                std::cout << "Module registered successfully!" << std::endl;
+            } else {
+                std::cerr << "Failed to register module to interpreter!" << std::endl;
+            }
+        } else {
+            std::cerr << "Failed to load module!" << std::endl;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Exception during module loading: " << e.what() << std::endl;
+    }
+    */
+
+    // 舊版本實現
     // 注释掉自动加载minimal模块，改为按需加载
     // std::cout << "Loading minimal module..." << std::endl;
     // try {
@@ -316,9 +350,9 @@ int repl() {
                 }
                 if (trimmed_line == ":clear") {
 #ifdef _WIN32
-                    [[maybe_unused]] auto result = system("cls");    // Windows下使用cls命令
+                    [[maybe_unused]] auto result = ad_bash_system("cls");    // Windows下使用cls命令
 #else
-                    [[maybe_unused]] auto result = system("clear");  // Linux/macOS下使用clear命令
+                    [[maybe_unused]] auto result = ad_bash_system("clear");  // Linux/macOS下使用clear命令
 #endif
                     ++lineno;
                     continue;

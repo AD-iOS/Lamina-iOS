@@ -1,4 +1,8 @@
 
 [submodule "interpreter/BigNumCore"]
-	path = interpreter/BigNumCore
+   path = interpreter/BigNumCore
 	url = https://github.com/Lamina-dev/Lammp.git
+
+[submodule "theos_sdks"]
+   path = theos_sdks
+   url = https://github.com/AD-iOS/iphoneos-sdk17.5.git

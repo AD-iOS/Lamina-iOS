@@ -8,6 +8,9 @@
 </div>
 <br>
 
+### iOS Lamina
+本仓库(AD-iOS/Lamina-iOS)不属于官方仓库(Lamina-dev/Lamina),仅定时和 Lamina-dev/Lamina 同步,并为 iOS jailbreak 提供最新的 Lamina
+
 ### RC阶段停止接收新特性、语法、功能，仅作为debug阶段。
 
 [![GitHub issues](https://img.shields.io/github/issues/lamina-dev/Lamina)](https://github.com/Lamina-dev/Lamina/issues)

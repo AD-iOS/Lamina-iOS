@@ -40,15 +40,124 @@
 #include <link.h>
 
 #elif defined(__APPLE__)
-
 #include <mach-o/dyld.h>
 #include <mach-o/nlist.h>
 #include <mach-o/loader.h>
-extern "C" bool _dyld_iterate_images(
-    bool (*callback)(const struct mach_header*, uintptr_t, const char*, void*),
-    void* data
-);
 
+static std::string s_target_lib_path;
+static std::vector<std::string>* s_macho_symbols = nullptr;
+
+static void iterate_macho_images() {
+    uint32_t count = _dyld_image_count();
+    
+    for (uint32_t i = 0; i < count; i++) {
+        const char* image_path = _dyld_get_image_name(i);
+        if (!image_path || std::string(image_path) != s_target_lib_path) {
+            continue;
+        }
+        
+        const struct mach_header* mh = _dyld_get_image_header(i);
+        uintptr_t vmaddr_slide = _dyld_get_image_vmaddr_slide(i);
+        
+        void* handle = dlopen(image_path, RTLD_LAZY | RTLD_LOCAL);
+        if (!handle) {
+            std::cerr << "macOS dlopen failed: " << dlerror() << std::endl;
+            continue;
+        }
+        
+        const struct load_command* lc = nullptr;
+        struct symtab_command* symtab_cmd = nullptr;
+        uint32_t ncmds = 0;
+        
+        uint32_t magic = mh->magic;
+        if (magic == MH_MAGIC_64 || magic == MH_CIGAM_64) {
+            const struct mach_header_64* mh64 = reinterpret_cast<const struct mach_header_64*>(mh);
+            lc = reinterpret_cast<const struct load_command*>(
+                reinterpret_cast<const uint8_t*>(mh64) + sizeof(struct mach_header_64)
+            );
+            ncmds = mh64->ncmds;
+        } else if (magic == MH_MAGIC || magic == MH_CIGAM) {
+            lc = reinterpret_cast<const struct load_command*>(
+                reinterpret_cast<const uint8_t*>(mh) + sizeof(struct mach_header)
+            );
+            ncmds = mh->ncmds;
+        } else {
+            dlclose(handle);
+            continue;
+        }
+        
+        // 查找符號表
+        for (uint32_t j = 0; j < ncmds; ++j) {
+            if (lc->cmd == LC_SYMTAB) {
+                symtab_cmd = reinterpret_cast<struct symtab_command*>(const_cast<struct load_command*>(lc));
+                break;
+            }
+            lc = reinterpret_cast<const struct load_command*>(
+                reinterpret_cast<const uint8_t*>(lc) + lc->cmdsize
+            );
+        }
+        
+        if (!symtab_cmd) {
+            dlclose(handle);
+            continue;
+        }
+        
+        const char* strtab = reinterpret_cast<const char*>(vmaddr_slide + symtab_cmd->stroff);
+        const uint32_t symcount = symtab_cmd->nsyms;
+        
+        // 解析符號表
+        if (magic == MH_MAGIC_64 || magic == MH_CIGAM_64) {
+            const struct nlist_64* symtab = reinterpret_cast<const struct nlist_64*>(
+                vmaddr_slide + symtab_cmd->symoff
+            );
+            for (uint32_t k = 0; k < symcount; ++k) {
+                const struct nlist_64* sym = &symtab[k];
+                if (sym->n_un.n_strx == 0 || !(sym->n_type & N_EXT) || (sym->n_type & N_STAB)) {
+                    continue;
+                }
+                const char* sym_name = strtab + sym->n_un.n_strx;
+                if (sym_name[0] == '_') sym_name++;
+                if (strstr(sym_name, "__mh_") || strstr(sym_name, "_dyld_")) {
+                    continue;
+                }
+                s_macho_symbols->emplace_back(sym_name);
+            }
+        } else {
+            const struct nlist* symtab = reinterpret_cast<const struct nlist*>(
+                vmaddr_slide + symtab_cmd->symoff
+            );
+            for (uint32_t k = 0; k < symcount; ++k) {
+                const struct nlist* sym = &symtab[k];
+                if (sym->n_un.n_strx == 0 || !(sym->n_type & N_EXT) || (sym->n_type & N_STAB)) {
+                    continue;
+                }
+                const char* sym_name = strtab + sym->n_un.n_strx;
+                if (sym_name[0] == '_') sym_name++;
+                if (strstr(sym_name, "__mh_") || strstr(sym_name, "_dyld_")) {
+                    continue;
+                }
+                s_macho_symbols->emplace_back(sym_name);
+            }
+        }
+        
+        dlclose(handle);
+        break;
+    }
+}
+
+std::vector<std::string> get_dylib_symbols(const std::string& lib_path) {
+    std::vector<std::string> symbols;
+    s_target_lib_path = lib_path;
+    s_macho_symbols = &symbols;
+    
+    // 使用公共 API 替代私有 API
+    // 這至少可以解決 arm64e 符號查找失敗的問題
+    iterate_macho_images();
+    
+    s_target_lib_path.clear();
+    s_macho_symbols = nullptr;
+    return symbols;
+}
 #endif
 
 #endif
@@ -192,6 +301,7 @@ std::vector<std::string> get_dylib_symbols(const std::string& lib_path) {
     return symbols;
 }
 
+/* 衝突了,舊實現
 #elif defined(__APPLE__)
 static std::string s_target_lib_path;
 static std::vector<std::string>* s_macho_symbols = nullptr;
@@ -294,6 +404,8 @@ std::vector<std::string> get_dylib_symbols(const std::string& lib_path) {
     s_macho_symbols = nullptr;
     return symbols;
 }
+*/
+
 #endif
 #endif
 
