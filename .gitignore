@@ -53,5 +53,5 @@ test_*.lm
 
 .xmake
 
-# AD gir-pr
-.gir-pr/*
+# AD git-pr
+.git-pr
